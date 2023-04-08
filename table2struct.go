@@ -206,9 +206,8 @@ func (t *Table2Struct) Run() error {
 		// 添加 method 获取真实表名
 		if t.realNameMethod != "" {
 			structContent += fmt.Sprintf("func (t %s) TableName() string {\n",
-				structName, t.realNameMethod)
-			structContent += fmt.Sprintf("%sreturn \"%s\"\n",
-				tab(depth), tableRealName)
+				structName)
+			structContent += fmt.Sprintf("return \"%s\"\n", tableRealName)
 			structContent += "}\n\n"
 		}
 	}
