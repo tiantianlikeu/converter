@@ -1,6 +1,8 @@
 a lib for golang , generate mysql table schema to golang struct  
 -----
 mysql表结构自动生成golang struct  
+增加form 标签，xml标签 
+增加小写驼峰处理
 
 ## github地址
 源-[https://github.com/gohouse/converter](https://github.com/gohouse/converter)
