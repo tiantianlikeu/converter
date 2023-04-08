@@ -11,8 +11,8 @@ mysql表结构自动生成golang struct
 ## 安装
 1. 源-直接下载可执行文件: [下载地址](https://github.com/gohouse/converter/releases)  
 2. 源-golang源码包: `go get github.com/gohouse/converter`
-3. 源-直接下载可执行文件: [下载地址](https://github.com/tiantianlikeu/converter/releases)
-4. 源-golang源码包: `go get github.com/tiantianlikeu/converter`
+3. 此-直接下载可执行文件: [下载地址](https://github.com/tiantianlikeu/converter/releases)
+4. 此-golang源码包: `go get github.com/tiantianlikeu/converter`
 
 ## 示例表结构
 ```sql
