@@ -54,7 +54,7 @@ CREATE TABLE `prefix_user` (
 package main
 import (
 	"fmt"
-	"github.com/gohouse/converter"
+	"github.com/tiantianlikeu/converter"
 )
 func main() {
 	err := converter.NewTable2Struct().
