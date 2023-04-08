@@ -3,11 +3,14 @@ a lib for golang , generate mysql table schema to golang struct
 mysql表结构自动生成golang struct  
 
 ## github地址
-[https://github.com/gohouse/converter](https://github.com/gohouse/converter)
+源-[https://github.com/gohouse/converter](https://github.com/gohouse/converter)
+此-[https://github.com/tiantianlikeu/converter](https://github.com/tiantianlikeu/converter)
 
 ## 安装
-1. 直接下载可执行文件: [下载地址](https://github.com/gohouse/converter/releases)  
-2. golang源码包: `go get github.com/gohouse/converter`
+1. 源-直接下载可执行文件: [下载地址](https://github.com/gohouse/converter/releases)  
+2. 源-golang源码包: `go get github.com/gohouse/converter`
+3. 源-直接下载可执行文件: [下载地址](https://github.com/tiantianlikeu/converter/releases)
+4. 源-golang源码包: `go get github.com/tiantianlikeu/converter`
 
 ## 示例表结构
 ```sql
@@ -21,7 +24,7 @@ CREATE TABLE `prefix_user` (
 ```
 
 ## 命令行用法
-1. 下载对应平台的可执行文件, [下载地址](https://github.com/gohouse/converter/releases)
+1. 源-下载对应平台的可执行文件, [下载地址](https://github.com/gohouse/converter/releases)
 
 2. 命令行执行
     ```sh
@@ -33,6 +36,9 @@ CREATE TABLE `prefix_user` (
 ```sh
 -dsn            string 数据库dsn配置
 -enableJsonTag  bool 是否添加json的tag
+-enableFormTag  bool 是否添加form的tag
+-enableXmlTag   bool 是否添加xml的tag
+
 -file           string 保存路径
 -packageName    string 包名
 -prefix         string 表前缀
@@ -62,47 +68,54 @@ func main() {
 package main
 
 import (
-	"fmt"
-	"github.com/gohouse/converter"
+   "fmt"
+   "github.com/tiantianlikeu/converter"
 )
 
 func main() {
-	// 初始化
-	t2t := converter.NewTable2Struct()
-	// 个性化配置
-	t2t.Config(&converter.T2tConfig{
-		// 如果字段首字母本来就是大写, 就不添加tag, 默认false添加, true不添加
-		RmTagIfUcFirsted: false,
-		// tag的字段名字是否转换为小写, 如果本身有大写字母的话, 默认false不转
-		TagToLower: false,
-		// 字段首字母大写的同时, 是否要把其他字母转换为小写,默认false不转换
-		UcFirstOnly: false,
-		//// 每个struct放入单独的文件,默认false,放入同一个文件(暂未提供)
-		//SeperatFile: false,
-	})
-	// 开始迁移转换
-	err := t2t.
-		// 指定某个表,如果不指定,则默认全部表都迁移
-		Table("user").
-		// 表前缀
-		Prefix("prefix_").
-		// 是否添加json tag
-		EnableJsonTag(true).
-		// 生成struct的包名(默认为空的话, 则取名为: package model)
-		PackageName("model").
-		// tag字段的key值,默认是orm
-		TagKey("orm").
-		// 是否添加结构体方法获取表名
-		RealNameMethod("TableName").
-		// 生成的结构体保存路径
-		SavePath("/Users/fizz/go/src/github.com/gohouse/gupiao/model/model.go").
-		// 数据库dsn,这里可以使用 t2t.DB() 代替,参数为 *sql.DB 对象
-		Dsn("root:root@tcp(localhost:3306)/test?charset=utf8").
-		// 执行
-		Run()
-	
-	fmt.Println(err)
+   // 初始化
+   t2t := converter.NewTable2Struct()
+   // 个性化配置
+   t2t.Config(&converter.T2tConfig{
+      // 如果字段首字母本来就是大写, 就不添加tag, 默认false添加, true不添加
+      RmTagIfUcFirsted: false,
+      // tag的字段名字是否转换为小写, 如果本身有大写字母的话, 默认false不转
+      TagToLower: false,
+      // 字段首字母大写的同时, 是否要把其他字母转换为小写,默认false不转换
+      UcFirstOnly:       false,
+      JsonTagToHump:     true, // 驼峰处理
+      JsonTagFirstLower: true, // json  tag 驼峰首字母小写
+      //// 每个struct放入单独的文件,默认false,放入同一个文件(暂未提供)
+      //SeperatFile: false,
+   })
+   // 开始迁移转换
+   err := t2t.
+      // 指定某个表,如果不指定,则默认全部表都迁移
+      Table("user").
+      // 表前缀
+      Prefix("prefix_").
+      // 是否添加json tag
+      EnableJsonTag(true).
+      // 是否添加form tag
+      EnableFormTag(true).
+      // 是否添加form tag
+      EnableXmlTag(true).
+      // 生成struct的包名(默认为空的话, 则取名为: package model)
+      PackageName("model").
+      // tag字段的key值,默认是orm
+      TagKey("orm").
+      // 是否添加结构体方法获取表名
+      RealNameMethod("TableName").
+      // 生成的结构体保存路径
+      SavePath("./user.go").
+      // 数据库dsn,这里可以使用 t2t.DB() 代替,参数为 *sql.DB 对象
+      Dsn("root:root@tcp(localhost:3306)/test?charset=utf8").
+      // 执行
+      Run()
+
+   fmt.Println(err)
 }
+
 ```
 
 result 

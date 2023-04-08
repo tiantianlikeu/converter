@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-//map for converting mysql type to golang types
+// map for converting mysql type to golang types
 var typeForMysqlToGo = map[string]string{
 	"int":                "int64",
 	"integer":            "int64",
@@ -60,18 +60,21 @@ type Table2Struct struct {
 	err            error
 	realNameMethod string
 	enableJsonTag  bool   // 是否添加json的tag, 默认不添加
+	enableXmlTag   bool   // 是否添加xml的tag, 默认不添加
+	enableFormTag  bool   // 是否添加form的tag, 默认不添加
 	packageName    string // 生成struct的包名(默认为空的话, 则取名为: package model)
 	tagKey         string // tag字段的key值,默认是orm
 	dateToTime     bool   // 是否将 date相关字段转换为 time.Time,默认否
 }
 
 type T2tConfig struct {
-	StructNameToHump bool // 结构体名称是否转为驼峰式，默认为false
-	RmTagIfUcFirsted bool // 如果字段首字母本来就是大写, 就不添加tag, 默认false添加, true不添加
-	TagToLower       bool // tag的字段名字是否转换为小写, 如果本身有大写字母的话, 默认false不转
-	JsonTagToHump    bool // json tag是否转为驼峰，默认为false，不转换
-	UcFirstOnly      bool // 字段首字母大写的同时, 是否要把其他字母转换为小写,默认false不转换
-	SeperatFile      bool // 每个struct放入单独的文件,默认false,放入同一个文件
+	StructNameToHump  bool // 结构体名称是否转为驼峰式，默认为false
+	RmTagIfUcFirsted  bool // 如果字段首字母本来就是大写, 就不添加tag, 默认false添加, true不添加
+	TagToLower        bool // tag的字段名字是否转换为小写, 如果本身有大写字母的话, 默认false不转
+	JsonTagFirstLower bool // json tag 首字母小写
+	JsonTagToHump     bool // json tag是否转为驼峰，默认为false，不转换
+	UcFirstOnly       bool // 字段首字母大写的同时, 是否要把其他字母转换为小写,默认false不转换
+	SeperatFile       bool // 每个struct放入单独的文件,默认false,放入同一个文件
 }
 
 func NewTable2Struct() *Table2Struct {
@@ -120,6 +123,14 @@ func (t *Table2Struct) Prefix(p string) *Table2Struct {
 
 func (t *Table2Struct) EnableJsonTag(p bool) *Table2Struct {
 	t.enableJsonTag = p
+	return t
+}
+func (t *Table2Struct) EnableXmlTag(p bool) *Table2Struct {
+	t.enableXmlTag = p
+	return t
+}
+func (t *Table2Struct) EnableFormTag(p bool) *Table2Struct {
+	t.enableFormTag = p
 	return t
 }
 
@@ -308,24 +319,34 @@ func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]co
 			}
 
 			if t.config.JsonTagToHump {
-				jsonTag = t.camelCase(jsonTag)
+				if t.config.JsonTagFirstLower {
+					jsonTag = t.camelCaseFistLower(jsonTag)
+				} else {
+					jsonTag = t.camelCase(jsonTag)
+				}
+
 			}
 
-			//if col.Nullable == "YES" {
-			//	col.Json = fmt.Sprintf("`json:\"%s,omitempty\"`", col.Json)
-			//} else {
-			//}
 		}
 		if t.tagKey == "" {
 			t.tagKey = "orm"
 		}
+		tagFormat := "`%s:\"%s\" "
+		col.Tag = fmt.Sprintf(tagFormat, t.tagKey, col.Tag)
 		if t.enableJsonTag {
-			//col.Json = fmt.Sprintf("`json:\"%s\" %s:\"%s\"`", col.Json, t.config.TagKey, col.Json)
-			col.Tag = fmt.Sprintf("`%s:\"%s\" json:\"%s\"`", t.tagKey, col.Tag, jsonTag)
-		} else {
-			col.Tag = fmt.Sprintf("`%s:\"%s\"`", t.tagKey, col.Tag)
+			col.Tag += " json:\"%s\" "
+			col.Tag = fmt.Sprintf(col.Tag, jsonTag)
 		}
-		//columns = append(columns, col)
+		if t.enableXmlTag {
+			col.Tag += " xml:\"%s\" "
+			col.Tag = fmt.Sprintf(col.Tag, jsonTag)
+		}
+		if t.enableFormTag {
+			col.Tag += " form:\"%s\" "
+			col.Tag = fmt.Sprintf(col.Tag, jsonTag)
+		}
+
+		col.Tag += "`"
 		if _, ok := tableColumns[col.TableName]; !ok {
 			tableColumns[col.TableName] = []column{}
 		}
@@ -344,12 +365,11 @@ func (t *Table2Struct) camelCase(str string) string {
 	for _, p := range strings.Split(str, "_") {
 		// 字段首字母大写的同时, 是否要把其他字母转换为小写
 		switch len(p) {
-		case 0:
 		case 1:
 			text += strings.ToUpper(p[0:1])
 		default:
 			// 字符长度大于1时
-			if t.config.UcFirstOnly == true {
+			if t.config.UcFirstOnly {
 				text += strings.ToUpper(p[0:1]) + strings.ToLower(p[1:])
 			} else {
 				text += strings.ToUpper(p[0:1]) + p[1:]
@@ -358,6 +378,35 @@ func (t *Table2Struct) camelCase(str string) string {
 	}
 	return text
 }
+
+// 首字母小写
+func (t *Table2Struct) camelCaseFistLower(str string) string {
+	// 是否有表前缀, 设置了就先去除表前缀
+	if t.prefix != "" {
+		str = strings.Replace(str, t.prefix, "", 1)
+	}
+	var text string
+	for i, p := range strings.Split(str, "_") {
+		// 字段首字母大写的同时, 是否要把其他字母转换为小写
+		switch len(p) {
+		case 1:
+			text += strings.ToLower(p[0:1])
+		default:
+			if i == 0 {
+				text += strings.ToLower(p[0:1]) + p[1:]
+			} else {
+				// 字符长度大于1时
+				if t.config.UcFirstOnly {
+					text += strings.ToUpper(p[0:1]) + strings.ToLower(p[1:])
+				} else {
+					text += strings.ToUpper(p[0:1]) + p[1:]
+				}
+			}
+		}
+	}
+	return text
+}
+
 func tab(depth int) string {
 	return strings.Repeat("\t", depth)
 }

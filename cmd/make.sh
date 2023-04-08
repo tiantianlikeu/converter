@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 版本
-version="v0.0.3"
+version="v1.0.0"
 
 # 名字
 darwin=table2struct-darwin."$version".bin
